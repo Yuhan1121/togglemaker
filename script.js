@@ -29,6 +29,9 @@ function wtgEscapeHtml(str) {
 function wtgMakeDefaultState() {
   return {
     title: "표 제목",
+    titleLayout: "basic",
+    titleImage: "",
+    borderWidth: 1,
     collapsible: true,
     collapsed: true,
     animatedToggle: true,
@@ -44,29 +47,30 @@ function wtgMakeDefaultState() {
     selectedCell: { row: 0, col: 0 },
     cells: [
       [
-        wtgCreateCell({ text: "행 1 · 열 1", bgColor: "#eceff3", color: "#374151", bold: true }),
-        wtgCreateCell({ text: "행 1 · 열 2", bgColor: "#f7f8fa", color: "#374151" }),
-        wtgCreateCell({ text: "행 1 · 열 3", bgColor: "#f7f8fa", color: "#374151" })
+        wtgCreateCell({ text: "1-1", bgColor: "#eceff3", color: "#374151", bold: true }),
+        wtgCreateCell({ text: "1-2", bgColor: "#f7f8fa", color: "#374151" }),
+        wtgCreateCell({ text: "1-3", bgColor: "#f7f8fa", color: "#374151" })
       ],
       [
-        wtgCreateCell({ text: "행 2 · 열 1", bgColor: "#ffffff", color: "#111827" }),
-        wtgCreateCell({ text: "행 2 · 열 2", bgColor: "#ffffff", color: "#111827" }),
-        wtgCreateCell({ text: "행 2 · 열 3", bgColor: "#ffffff", color: "#111827" })
+        wtgCreateCell({ text: "2-1", bgColor: "#ffffff", color: "#111827" }),
+        wtgCreateCell({ text: "2-2", bgColor: "#ffffff", color: "#111827" }),
+        wtgCreateCell({ text: "2-3", bgColor: "#ffffff", color: "#111827" })
       ],
       [
-        wtgCreateCell({ text: "행 3 · 열 1", bgColor: "#ffffff", color: "#111827" }),
-        wtgCreateCell({ text: "행 3 · 열 2", bgColor: "#ffffff", color: "#111827" }),
-        wtgCreateCell({ text: "행 3 · 열 3", bgColor: "#ffffff", color: "#111827" })
+        wtgCreateCell({ text: "3-1", bgColor: "#ffffff", color: "#111827" }),
+        wtgCreateCell({ text: "3-2", bgColor: "#ffffff", color: "#111827" }),
+        wtgCreateCell({ text: "3-3", bgColor: "#ffffff", color: "#111827" })
       ]
     ]
   };
 }
 
 var wtgState = wtgMakeDefaultState();
-var wtgEditorOpen = false;
 
 var wtgEls = {
   titleInput: document.getElementById("wtgTitleInput"),
+  titleLayoutSelect: document.getElementById("wtgTitleLayoutSelect"),
+  borderWidthInput: document.getElementById("wtgBorderWidthInput"),
   collapsibleInput: document.getElementById("wtgCollapsibleInput"),
   animatedToggleInput: document.getElementById("wtgAnimatedToggleInput"),
   footerInput: document.getElementById("wtgFooterInput"),
@@ -74,10 +78,14 @@ var wtgEls = {
   titleColorInput: document.getElementById("wtgTitleColorInput"),
   borderColorInput: document.getElementById("wtgBorderColorInput"),
   toggleBgInput: document.getElementById("wtgToggleBgInput"),
-  titleBgPreview: document.getElementById("wtgTitleBgPreview"),
-  titleColorPreview: document.getElementById("wtgTitleColorPreview"),
-  borderColorPreview: document.getElementById("wtgBorderColorPreview"),
-  toggleBgPreview: document.getElementById("wtgToggleBgPreview"),
+  titleBgBox: document.getElementById("wtgTitleBgBox"),
+  titleColorBox: document.getElementById("wtgTitleColorBox"),
+  borderColorBox: document.getElementById("wtgBorderColorBox"),
+  toggleBgBox: document.getElementById("wtgToggleBgBox"),
+  titleBgText: document.getElementById("wtgTitleBgText"),
+  titleColorText: document.getElementById("wtgTitleColorText"),
+  borderColorText: document.getElementById("wtgBorderColorText"),
+  toggleBgText: document.getElementById("wtgToggleBgText"),
   addRowBtn: document.getElementById("wtgAddRowBtn"),
   removeRowBtn: document.getElementById("wtgRemoveRowBtn"),
   addColBtn: document.getElementById("wtgAddColBtn"),
@@ -91,33 +99,39 @@ var wtgEls = {
   cellAlignInput: document.getElementById("wtgCellAlignInput"),
   cellBgInput: document.getElementById("wtgCellBgInput"),
   cellColorInput: document.getElementById("wtgCellColorInput"),
-  cellBgPreview: document.getElementById("wtgCellBgPreview"),
-  cellColorPreview: document.getElementById("wtgCellColorPreview"),
+  cellBgBox: document.getElementById("wtgCellBgBox"),
+  cellColorBox: document.getElementById("wtgCellColorBox"),
+  cellBgText: document.getElementById("wtgCellBgText"),
+  cellColorText: document.getElementById("wtgCellColorText"),
   cellBoldInput: document.getElementById("wtgCellBoldInput"),
   previewRoot: document.getElementById("wtgPreviewRoot"),
-  codeOutput: document.getElementById("wtgCodeOutput"),
-  copyMarkupBtn: document.getElementById("wtgCopyMarkupBtn"),
-  copyHtmlBtn: document.getElementById("wtgCopyHtmlBtn"),
-  copyCssBtn: document.getElementById("wtgCopyCssBtn"),
-  copyJsBtn: document.getElementById("wtgCopyJsBtn"),
+  codeOutputStructure: document.getElementById("wtgCodeOutputStructure"),
+  codeOutputContent: document.getElementById("wtgCodeOutputContent"),
+  copyAllTopBtn: document.getElementById("wtgCopyAllTopBtn"),
+  copyAllStructureBtn: document.getElementById("wtgCopyAllStructureBtn"),
+  copyAllContentBtn: document.getElementById("wtgCopyAllContentBtn"),
   tabButtons: document.querySelectorAll(".wtg-tab-button"),
-  tabPanels: document.querySelectorAll(".wtg-tab-panel")
+  tabPanels: document.querySelectorAll(".wtg-tab-panel"),
+  boldBtn: document.getElementById("wtgBoldBtn"),
+  italicBtn: document.getElementById("wtgItalicBtn"),
+  strikeBtn: document.getElementById("wtgStrikeBtn"),
+  linkBtn: document.getElementById("wtgLinkBtn")
 };
 
 function wtgGetSelectedCell() {
   return wtgState.cells[wtgState.selectedCell.row][wtgState.selectedCell.col];
 }
 
-function wtgUpdateColorPreview(previewEl, value) {
-  if (previewEl) {
-    previewEl.style.background = value;
-  }
+function wtgSetColorBox(box, textEl, value) {
+  if (box) box.style.background = value;
+  if (textEl) textEl.textContent = value;
 }
 
 function wtgApplyStateToInputs() {
   var cell = wtgGetSelectedCell();
-
   wtgEls.titleInput.value = wtgState.title;
+  wtgEls.titleLayoutSelect.value = wtgState.titleLayout;
+  wtgEls.borderWidthInput.value = String(wtgState.borderWidth);
   wtgEls.collapsibleInput.checked = wtgState.collapsible;
   wtgEls.animatedToggleInput.checked = wtgState.animatedToggle;
   wtgEls.footerInput.value = wtgState.footer;
@@ -125,7 +139,6 @@ function wtgApplyStateToInputs() {
   wtgEls.titleColorInput.value = wtgState.colors.titleColor;
   wtgEls.borderColorInput.value = wtgState.colors.borderColor;
   wtgEls.toggleBgInput.value = wtgState.colors.toggleBg;
-
   wtgEls.cellTextInput.value = cell.text;
   wtgEls.cellLinkInput.value = cell.link;
   wtgEls.cellImageInput.value = cell.image;
@@ -135,19 +148,18 @@ function wtgApplyStateToInputs() {
   wtgEls.cellColorInput.value = cell.color;
   wtgEls.cellBoldInput.checked = cell.bold;
 
-  wtgUpdateColorPreview(wtgEls.titleBgPreview, wtgState.colors.titleBg);
-  wtgUpdateColorPreview(wtgEls.titleColorPreview, wtgState.colors.titleColor);
-  wtgUpdateColorPreview(wtgEls.borderColorPreview, wtgState.colors.borderColor);
-  wtgUpdateColorPreview(wtgEls.toggleBgPreview, wtgState.colors.toggleBg);
-  wtgUpdateColorPreview(wtgEls.cellBgPreview, cell.bgColor);
-  wtgUpdateColorPreview(wtgEls.cellColorPreview, cell.color);
+  wtgSetColorBox(wtgEls.titleBgBox, wtgEls.titleBgText, wtgState.colors.titleBg);
+  wtgSetColorBox(wtgEls.titleColorBox, wtgEls.titleColorText, wtgState.colors.titleColor);
+  wtgSetColorBox(wtgEls.borderColorBox, wtgEls.borderColorText, wtgState.colors.borderColor);
+  wtgSetColorBox(wtgEls.toggleBgBox, wtgEls.toggleBgText, wtgState.colors.toggleBg);
+  wtgSetColorBox(wtgEls.cellBgBox, wtgEls.cellBgText, cell.bgColor);
+  wtgSetColorBox(wtgEls.cellColorBox, wtgEls.cellColorText, cell.color);
 }
 
 function wtgSetActiveTab(tabName) {
   wtgEls.tabButtons.forEach(function (button) {
     button.classList.toggle("wtg-active", button.getAttribute("data-tab") === tabName);
   });
-
   wtgEls.tabPanels.forEach(function (panel) {
     panel.classList.toggle("wtg-active", panel.getAttribute("data-panel") === tabName);
   });
@@ -156,17 +168,14 @@ function wtgSetActiveTab(tabName) {
 function wtgRenderCellButtons() {
   var r;
   var c;
-
   wtgEls.cellList.innerHTML = "";
 
   for (r = 0; r < wtgState.rows; r += 1) {
     for (c = 0; c < wtgState.cols; c += 1) {
       var button = document.createElement("button");
-      var previewText = wtgState.cells[r][c].text.trim() || "빈 셀";
-
       button.type = "button";
       button.className = "wtg-cell-chip" + (wtgState.selectedCell.row === r && wtgState.selectedCell.col === c ? " wtg-active" : "");
-      button.textContent = "행 " + (r + 1) + " · 열 " + (c + 1) + " · " + previewText.slice(0, 12);
+      button.textContent = (r + 1) + "-" + (c + 1);
       button.dataset.row = String(r);
       button.dataset.col = String(c);
       button.addEventListener("click", function () {
@@ -178,7 +187,6 @@ function wtgRenderCellButtons() {
         wtgSetActiveTab("content");
         wtgRender(false);
       });
-
       wtgEls.cellList.appendChild(button);
     }
   }
@@ -186,8 +194,19 @@ function wtgRenderCellButtons() {
   wtgEls.tableSizeText.textContent = "현재 표 크기는 " + wtgState.rows + "행 × " + wtgState.cols + "열입니다.";
 }
 
+function wtgParseInlineMarkup(text) {
+  var html = wtgEscapeHtml(text);
+  html = html.replace(/\[\[(https?:\/\/[^\]|]+)\|([^\]]+)\]\]/g, '<a href="$1" target="_blank" rel="noreferrer noopener">$2</a>');
+  html = html.replace(/\[\[(https?:\/\/[^\]]+)\]\]/g, '<a href="$1" target="_blank" rel="noreferrer noopener">$1</a>');
+  html = html.replace(/'''([^']+?)'''/g, '<strong>$1</strong>');
+  html = html.replace(/''([^']+?)''/g, '<em>$1</em>');
+  html = html.replace(/~~([^~]+?)~~/g, '<s>$1</s>');
+  html = wtgReplaceAll(html, "\n", "<br>");
+  return html;
+}
+
 function wtgFormatTextForPreview(cell) {
-  var content = wtgReplaceAll(wtgEscapeHtml(cell.text), "\n", "<br>");
+  var content = wtgParseInlineMarkup(cell.text);
   var rawLink = cell.link.trim();
 
   if (rawLink) {
@@ -208,11 +227,7 @@ function wtgFormatTextForPreview(cell) {
 
 function wtgApplyToggleState(contentEl, collapsed, animated, force) {
   var fullHeight;
-
-  if (!contentEl) {
-    return;
-  }
-
+  if (!contentEl) return;
   fullHeight = contentEl.scrollHeight;
 
   if (!animated || force) {
@@ -223,7 +238,6 @@ function wtgApplyToggleState(contentEl, collapsed, animated, force) {
   }
 
   contentEl.classList.add("wtg-animated");
-
   if (collapsed) {
     contentEl.style.height = fullHeight + "px";
     contentEl.style.opacity = "1";
@@ -237,6 +251,26 @@ function wtgApplyToggleState(contentEl, collapsed, animated, force) {
   }
 }
 
+function wtgBuildTitleHtml() {
+  var imageCell = wtgGetSelectedCell();
+  var imageUrl = imageCell.image.trim();
+  var imageWidth = Number(imageCell.imageWidth) || 80;
+  var text = wtgEscapeHtml(wtgState.title).replace(/\n/g, "<br>");
+
+  if (wtgState.titleLayout === "composite") {
+    return '<div class="wtg-title-composite">' +
+      '<div class="wtg-title-composite-media">' + (imageUrl ? '<img src="' + wtgEscapeHtml(imageUrl) + '" style="width:' + imageWidth + 'px;" alt="" />' : '') + '</div>' +
+      '<div class="wtg-title-divider"></div>' +
+      '<div class="wtg-title-composite-text">' + text + '</div>' +
+      '</div>';
+  }
+
+  return '<div class="wtg-title-basic">' +
+    (imageUrl ? '<img src="' + wtgEscapeHtml(imageUrl) + '" style="width:' + imageWidth + 'px;" alt="" />' : '') +
+    '<div class="wtg-title-basic-text">' + text + '</div>' +
+    '</div>';
+}
+
 function wtgRenderPreview(useAnimation) {
   var rowsHtml = "";
   var r;
@@ -244,41 +278,31 @@ function wtgRenderPreview(useAnimation) {
 
   for (r = 0; r < wtgState.rows; r += 1) {
     rowsHtml += "<tr>";
-
     for (c = 0; c < wtgState.cols; c += 1) {
       var cell = wtgState.cells[r][c];
       var imageHtml = "";
       var selectedClass = wtgState.selectedCell.row === r && wtgState.selectedCell.col === c ? "wtg-selected" : "";
-
       if (cell.image.trim()) {
         imageHtml = '<img class="wtg-cell-image" src="' + wtgEscapeHtml(cell.image) + '" style="width:' + (Number(cell.imageWidth) || 80) + 'px;" alt="" />';
       }
-
-      rowsHtml += '<td data-row="' + r + '" data-col="' + c + '" class="' + selectedClass + '" style="background:' + cell.bgColor + '; color:' + cell.color + '; text-align:' + cell.align + '; font-weight:' + (cell.bold ? 700 : 400) + '; border-color:' + wtgState.colors.borderColor + ';">' + imageHtml + wtgFormatTextForPreview(cell) + '</td>';
+      rowsHtml += '<td data-row="' + r + '" data-col="' + c + '" class="' + selectedClass + '" style="background:' + cell.bgColor + '; color:' + cell.color + '; text-align:' + cell.align + '; font-weight:' + (cell.bold ? 700 : 400) + '; border-color:' + wtgState.colors.borderColor + '; border-width:' + wtgState.borderWidth + 'px;">' + imageHtml + wtgFormatTextForPreview(cell) + '</td>';
     }
-
     rowsHtml += "</tr>";
   }
 
   var html = '';
-  html += '<div class="wtg-box" style="border:1px solid ' + wtgState.colors.borderColor + ';">';
-  html += '<div class="wtg-title" style="background:' + wtgState.colors.titleBg + '; color:' + wtgState.colors.titleColor + '; border-bottom:1px solid ' + wtgState.colors.borderColor + ';">' + wtgEscapeHtml(wtgState.title) + '</div>';
-
+  html += '<div class="wtg-box" style="border:' + wtgState.borderWidth + 'px solid ' + wtgState.colors.borderColor + ';">';
+  html += '<div class="wtg-title" style="background:' + wtgState.colors.titleBg + '; color:' + wtgState.colors.titleColor + '; border-bottom:' + wtgState.borderWidth + 'px solid ' + wtgState.colors.borderColor + ';">' + wtgBuildTitleHtml() + '</div>';
   if (wtgState.collapsible) {
-    html += '<div class="wtg-toggle" id="wtgPreviewToggle" style="background:' + wtgState.colors.toggleBg + '; color:#374151; border-bottom:1px solid ' + wtgState.colors.borderColor + ';">[ ' + (wtgState.collapsed ? '펼치기' : '접기') + ' ]</div>';
+    html += '<div class="wtg-toggle" id="wtgPreviewToggle" style="background:' + wtgState.colors.toggleBg + '; color:#374151; border-bottom:' + wtgState.borderWidth + 'px solid ' + wtgState.colors.borderColor + ';">[ ' + (wtgState.collapsed ? '펼치기' : '접기') + ' ]</div>';
   }
-
   html += '<div class="wtg-toggle-content" id="wtgPreviewToggleContent">';
   html += '<div class="wtg-table-wrap">';
   html += '<table class="wtg-table"><tbody>' + rowsHtml + '</tbody></table>';
-
   if (wtgState.footer.trim()) {
-    html += '<div class="wtg-footer" style="border-top:1px solid ' + wtgState.colors.borderColor + '; color:#4b5563;">' + wtgReplaceAll(wtgEscapeHtml(wtgState.footer), "\n", '<br>') + '</div>';
+    html += '<div class="wtg-footer" style="border-top:' + wtgState.borderWidth + 'px solid ' + wtgState.colors.borderColor + '; color:#4b5563;">' + wtgReplaceAll(wtgEscapeHtml(wtgState.footer), "\n", '<br>') + '</div>';
   }
-
-  html += '</div>';
-  html += '</div>';
-  html += '</div>';
+  html += '</div></div></div>';
 
   wtgEls.previewRoot.innerHTML = html;
 
@@ -296,7 +320,7 @@ function wtgRenderPreview(useAnimation) {
       wtgState.collapsed = !wtgState.collapsed;
       wtgApplyToggleState(contentEl, wtgState.collapsed, wtgState.animatedToggle, false);
       this.textContent = '[ ' + (wtgState.collapsed ? '펼치기' : '접기') + ' ]';
-      wtgRenderMarkupOnly();
+      wtgRenderExportCode();
     });
   }
 
@@ -314,81 +338,20 @@ function wtgRenderPreview(useAnimation) {
   });
 }
 
-function wtgBuildCellMarkup(cell) {
-  var styleParts = [];
-  var content = cell.text || " ";
-  var rawLink = cell.link.trim();
-  var imageMarkup = "";
-
-  if (cell.bgColor) styleParts.push("bgcolor=" + cell.bgColor);
-  if (cell.color) styleParts.push("color=" + cell.color);
-  if (cell.align) styleParts.push("align=" + cell.align);
-
-  if (cell.image.trim()) {
-    imageMarkup = "[[파일:" + cell.image + "|width=" + (Number(cell.imageWidth) || 80) + "]]";
-    content = content.trim() ? imageMarkup + "[br]" + content : imageMarkup;
-  }
-
-  if (rawLink) {
-    if (rawLink.indexOf("[[") === 0 && rawLink.lastIndexOf("]]") === rawLink.length - 2) {
-      content = rawLink + (content.trim() ? "[br]" + content : "");
-    } else {
-      content = "[" + rawLink + " " + content + "]";
-    }
-  }
-
-  if (cell.bold) {
-    content = "'''" + content + "'''";
-  }
-
-  content = wtgReplaceAll(content, "\n", "[br]");
-  return "||<" + styleParts.join("><") + "> " + content + " ";
+function wtgBuildExportCode() {
+  return document.documentElement.outerHTML;
 }
 
-function wtgBuildMarkupCode() {
-  var lines = [];
-
-  lines.push("||<table align=center><table bordercolor=" + wtgState.colors.borderColor + "><bgcolor=" + wtgState.colors.titleBg + "><color=" + wtgState.colors.titleColor + "> '''" + (wtgState.title || "표 제목") + "''' ||");
-
-  if (wtgState.collapsible) {
-    lines.push("||<bgcolor=" + wtgState.colors.toggleBg + "><- " + (wtgState.collapsed ? "[펼치기]" : "[접기]") + " ||");
-  }
-
-  wtgState.cells.forEach(function (row) {
-    var line = row.map(wtgBuildCellMarkup).join("") + "||";
-    lines.push(line);
-  });
-
-  if (wtgState.footer.trim()) {
-    lines.push("||<bgcolor=#f5f6f8><color=#4b5563><- " + wtgState.cols + "> " + wtgReplaceAll(wtgState.footer, "\n", "[br]") + " ||");
-  }
-
-  return lines.join("\n");
-}
-
-function wtgRenderMarkupOnly() {
-  wtgEls.codeOutput.textContent = wtgBuildMarkupCode();
-}
-
-function wtgBuildHtmlFile() {
-  return [
-    "<!DOCTYPE html>",
-    '<html lang="ko">',
-    "<head>",
-    '  <meta charset="UTF-8" />',
-    '  <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
-    '  <title>위키 접기/펼치기 표 생성기</title>',
-    '  <link rel="stylesheet" href="style.css" />',
-    "</head>",
-    "<body>",
-    document.documentElement.outerHTML.split("<body>")[1].split("<script src=\"script.js\"></script>")[0] + '  <script src="script.js"></script>\n</body>\n</html>'
-  ].join("\n");
+function wtgRenderExportCode() {
+  var code = wtgBuildExportCode();
+  wtgEls.codeOutputStructure.textContent = code;
+  wtgEls.codeOutputContent.textContent = code;
 }
 
 function wtgRender(useAnimation) {
   wtgRenderCellButtons();
   wtgRenderPreview(useAnimation);
-  wtgRenderMarkupOnly();
+  wtgRenderExportCode();
 }
 
 function wtgCopyText(text, button) {
@@ -405,14 +368,71 @@ function wtgCopyText(text, button) {
     });
 }
 
+function wtgOpenColorInput(input) {
+  if (input && typeof input.showPicker === "function") {
+    input.showPicker();
+  } else if (input) {
+    input.click();
+  }
+}
+
+function wtgWrapSelection(before, after) {
+  var textarea = wtgEls.cellTextInput;
+  var start = textarea.selectionStart;
+  var end = textarea.selectionEnd;
+  var value = textarea.value;
+  var selected = value.slice(start, end);
+  var next = value.slice(0, start) + before + selected + after + value.slice(end);
+  textarea.value = next;
+  textarea.focus();
+  textarea.selectionStart = start + before.length;
+  textarea.selectionEnd = end + before.length;
+  wtgGetSelectedCell().text = textarea.value;
+  wtgRender(false);
+}
+
+function wtgInsertLink() {
+  var textarea = wtgEls.cellTextInput;
+  var start = textarea.selectionStart;
+  var end = textarea.selectionEnd;
+  var selected = textarea.value.slice(start, end) || "링크 텍스트";
+  var url = prompt("링크 주소를 입력해 주세요.", "https://");
+  var value;
+  if (!url) return;
+  value = textarea.value;
+  textarea.value = value.slice(0, start) + "[[" + url + "|" + selected + "]]" + value.slice(end);
+  textarea.focus();
+  textarea.selectionStart = start;
+  textarea.selectionEnd = start + ("[[" + url + "|" + selected + "]]").length;
+  wtgGetSelectedCell().text = textarea.value;
+  wtgRender(false);
+}
+
 wtgEls.tabButtons.forEach(function (button) {
   button.addEventListener("click", function () {
     wtgSetActiveTab(button.getAttribute("data-tab"));
   });
 });
 
+wtgEls.titleBgBox.addEventListener("click", function () { wtgOpenColorInput(wtgEls.titleBgInput); });
+wtgEls.titleColorBox.addEventListener("click", function () { wtgOpenColorInput(wtgEls.titleColorInput); });
+wtgEls.borderColorBox.addEventListener("click", function () { wtgOpenColorInput(wtgEls.borderColorInput); });
+wtgEls.toggleBgBox.addEventListener("click", function () { wtgOpenColorInput(wtgEls.toggleBgInput); });
+wtgEls.cellBgBox.addEventListener("click", function () { wtgOpenColorInput(wtgEls.cellBgInput); });
+wtgEls.cellColorBox.addEventListener("click", function () { wtgOpenColorInput(wtgEls.cellColorInput); });
+
 wtgEls.titleInput.addEventListener("input", function (e) {
   wtgState.title = e.target.value;
+  wtgRender(false);
+});
+
+wtgEls.titleLayoutSelect.addEventListener("change", function (e) {
+  wtgState.titleLayout = e.target.value;
+  wtgRender(false);
+});
+
+wtgEls.borderWidthInput.addEventListener("input", function (e) {
+  wtgState.borderWidth = Number(e.target.value) || 1;
   wtgRender(false);
 });
 
@@ -433,25 +453,25 @@ wtgEls.footerInput.addEventListener("input", function (e) {
 
 wtgEls.titleBgInput.addEventListener("input", function (e) {
   wtgState.colors.titleBg = e.target.value;
-  wtgUpdateColorPreview(wtgEls.titleBgPreview, e.target.value);
+  wtgApplyStateToInputs();
   wtgRender(false);
 });
 
 wtgEls.titleColorInput.addEventListener("input", function (e) {
   wtgState.colors.titleColor = e.target.value;
-  wtgUpdateColorPreview(wtgEls.titleColorPreview, e.target.value);
+  wtgApplyStateToInputs();
   wtgRender(false);
 });
 
 wtgEls.borderColorInput.addEventListener("input", function (e) {
   wtgState.colors.borderColor = e.target.value;
-  wtgUpdateColorPreview(wtgEls.borderColorPreview, e.target.value);
+  wtgApplyStateToInputs();
   wtgRender(false);
 });
 
 wtgEls.toggleBgInput.addEventListener("input", function (e) {
   wtgState.colors.toggleBg = e.target.value;
-  wtgUpdateColorPreview(wtgEls.toggleBgPreview, e.target.value);
+  wtgApplyStateToInputs();
   wtgRender(false);
 });
 
@@ -459,15 +479,13 @@ wtgEls.addRowBtn.addEventListener("click", function () {
   var newRowIndex = wtgState.rows;
   var newRow = [];
   var colIndex;
-
   for (colIndex = 0; colIndex < wtgState.cols; colIndex += 1) {
     newRow.push(wtgCreateCell({
-      text: "행 " + (newRowIndex + 1) + " · 열 " + (colIndex + 1),
+      text: (newRowIndex + 1) + "-" + (colIndex + 1),
       bgColor: "#ffffff",
       color: "#111827"
     }));
   }
-
   wtgState.cells.push(newRow);
   wtgState.rows += 1;
   wtgRender(false);
@@ -487,7 +505,7 @@ wtgEls.removeRowBtn.addEventListener("click", function () {
 wtgEls.addColBtn.addEventListener("click", function () {
   wtgState.cells.forEach(function (row, rowIndex) {
     row.push(wtgCreateCell({
-      text: "행 " + (rowIndex + 1) + " · 열 " + (wtgState.cols + 1),
+      text: (rowIndex + 1) + "-" + (wtgState.cols + 1),
       bgColor: "#ffffff",
       color: "#111827"
     }));
@@ -536,13 +554,13 @@ wtgEls.cellAlignInput.addEventListener("change", function (e) {
 
 wtgEls.cellBgInput.addEventListener("input", function (e) {
   wtgGetSelectedCell().bgColor = e.target.value;
-  wtgUpdateColorPreview(wtgEls.cellBgPreview, e.target.value);
+  wtgApplyStateToInputs();
   wtgRender(false);
 });
 
 wtgEls.cellColorInput.addEventListener("input", function (e) {
   wtgGetSelectedCell().color = e.target.value;
-  wtgUpdateColorPreview(wtgEls.cellColorPreview, e.target.value);
+  wtgApplyStateToInputs();
   wtgRender(false);
 });
 
@@ -551,30 +569,18 @@ wtgEls.cellBoldInput.addEventListener("change", function (e) {
   wtgRender(false);
 });
 
-wtgEls.copyMarkupBtn.addEventListener("click", function () {
-  wtgCopyText(wtgBuildMarkupCode(), wtgEls.copyMarkupBtn);
-});
+wtgEls.boldBtn.addEventListener("click", function () { wtgWrapSelection("'''", "'''"); });
+wtgEls.italicBtn.addEventListener("click", function () { wtgWrapSelection("''", "''"); });
+wtgEls.strikeBtn.addEventListener("click", function () { wtgWrapSelection("~~", "~~"); });
+wtgEls.linkBtn.addEventListener("click", function () { wtgInsertLink(); });
 
-wtgEls.copyHtmlBtn.addEventListener("click", function () {
-  wtgCopyText(document.documentElement.outerHTML, wtgEls.copyHtmlBtn);
-});
+function wtgCopyAll(button) {
+  wtgCopyText(wtgBuildExportCode(), button);
+}
 
-wtgEls.copyCssBtn.addEventListener("click", function () {
-  var cssText = Array.from(document.styleSheets[0].cssRules).map(function (rule) {
-    return rule.cssText;
-  }).join("\n\n");
-  wtgCopyText(cssText, wtgEls.copyCssBtn);
-});
-
-wtgEls.copyJsBtn.addEventListener("click", function () {
-  var scriptText = document.querySelector('script[src="script.js"]');
-  if (scriptText) {
-    fetch(scriptText.getAttribute("src"))
-      .then(function (response) { return response.text(); })
-      .then(function (text) { wtgCopyText(text, wtgEls.copyJsBtn); })
-      .catch(function () { alert("JS 복사에 실패했습니다."); });
-  }
-});
+wtgEls.copyAllTopBtn.addEventListener("click", function () { wtgCopyAll(wtgEls.copyAllTopBtn); });
+wtgEls.copyAllStructureBtn.addEventListener("click", function () { wtgCopyAll(wtgEls.copyAllStructureBtn); });
+wtgEls.copyAllContentBtn.addEventListener("click", function () { wtgCopyAll(wtgEls.copyAllContentBtn); });
 
 wtgApplyStateToInputs();
 wtgSetActiveTab("structure");

@@ -13,6 +13,9 @@
         <header class="wtg-app-header">
           <h1>표 편집기</h1>
           <p>왼쪽 패널에서 구조와 내용을 나누어 수정할 수 있습니다.</p>
+          <div class="wtg-header-actions">
+            <button id="wtgCopyAllTopBtn" class="wtg-button" type="button">전체 코드 복사</button>
+          </div>
         </header>
 
         <div class="wtg-tabs" role="tablist" aria-label="편집 탭">
@@ -27,6 +30,20 @@
               <div class="wtg-field">
                 <label for="wtgTitleInput">표 제목</label>
                 <input id="wtgTitleInput" class="wtg-input" type="text" value="표 제목" />
+              </div>
+
+              <div class="wtg-inline">
+                <div class="wtg-field">
+                  <label for="wtgTitleLayoutSelect">제목 레이아웃</label>
+                  <select id="wtgTitleLayoutSelect" class="wtg-select">
+                    <option value="basic">기본</option>
+                    <option value="composite">복합</option>
+                  </select>
+                </div>
+                <div class="wtg-field">
+                  <label for="wtgBorderWidthInput">테두리 두께</label>
+                  <input id="wtgBorderWidthInput" class="wtg-number" type="number" min="1" max="12" value="1" />
+                </div>
               </div>
 
               <label class="wtg-check-row">
@@ -47,37 +64,41 @@
 
             <div class="wtg-section">
               <h2>기본 디자인</h2>
-              <div class="wtg-inline">
-                <div class="wtg-field">
-                  <label for="wtgTitleBgInput">제목 배경</label>
-                  <div class="wtg-color-field">
-                    <input id="wtgTitleBgInput" class="wtg-color" type="color" value="#7b818c" />
-                    <span class="wtg-color-preview" id="wtgTitleBgPreview"></span>
+              <div class="wtg-color-grid">
+                <div class="wtg-color-item">
+                  <label>제목 배경</label>
+                  <div class="wtg-color-box-row">
+                    <button id="wtgTitleBgBox" class="wtg-color-box" type="button"></button>
+                    <span id="wtgTitleBgText" class="wtg-color-text"></span>
+                    <input id="wtgTitleBgInput" class="wtg-hidden-color" type="color" value="#7b818c" />
                   </div>
                 </div>
-                <div class="wtg-field">
-                  <label for="wtgTitleColorInput">제목 글자</label>
-                  <div class="wtg-color-field">
-                    <input id="wtgTitleColorInput" class="wtg-color" type="color" value="#ffffff" />
-                    <span class="wtg-color-preview" id="wtgTitleColorPreview"></span>
+                <div class="wtg-color-item">
+                  <label>제목 글자</label>
+                  <div class="wtg-color-box-row">
+                    <button id="wtgTitleColorBox" class="wtg-color-box" type="button"></button>
+                    <span id="wtgTitleColorText" class="wtg-color-text"></span>
+                    <input id="wtgTitleColorInput" class="wtg-hidden-color" type="color" value="#ffffff" />
                   </div>
                 </div>
-                <div class="wtg-field">
-                  <label for="wtgBorderColorInput">테두리</label>
-                  <div class="wtg-color-field">
-                    <input id="wtgBorderColorInput" class="wtg-color" type="color" value="#b8bec8" />
-                    <span class="wtg-color-preview" id="wtgBorderColorPreview"></span>
+                <div class="wtg-color-item">
+                  <label>테두리</label>
+                  <div class="wtg-color-box-row">
+                    <button id="wtgBorderColorBox" class="wtg-color-box" type="button"></button>
+                    <span id="wtgBorderColorText" class="wtg-color-text"></span>
+                    <input id="wtgBorderColorInput" class="wtg-hidden-color" type="color" value="#b8bec8" />
                   </div>
                 </div>
-                <div class="wtg-field">
-                  <label for="wtgToggleBgInput">접기 줄 배경</label>
-                  <div class="wtg-color-field">
-                    <input id="wtgToggleBgInput" class="wtg-color" type="color" value="#f5f6f8" />
-                    <span class="wtg-color-preview" id="wtgToggleBgPreview"></span>
+                <div class="wtg-color-item">
+                  <label>접기 줄 배경</label>
+                  <div class="wtg-color-box-row">
+                    <button id="wtgToggleBgBox" class="wtg-color-box" type="button"></button>
+                    <span id="wtgToggleBgText" class="wtg-color-text"></span>
+                    <input id="wtgToggleBgInput" class="wtg-hidden-color" type="color" value="#f5f6f8" />
                   </div>
                 </div>
               </div>
-              <p class="wtg-muted">색상은 오른쪽 사각형 미리보기로 바로 확인할 수 있습니다.</p>
+              <p class="wtg-muted">네모 상자를 누르면 색상을 바로 바꿀 수 있습니다.</p>
             </div>
 
             <div class="wtg-section">
@@ -90,6 +111,14 @@
               </div>
               <p id="wtgTableSizeText" class="wtg-muted"></p>
             </div>
+
+            <div class="wtg-section">
+              <h2>코드 복사</h2>
+              <div class="wtg-file-copy-row">
+                <button id="wtgCopyAllStructureBtn" class="wtg-button" type="button">전체 코드 복사</button>
+              </div>
+              <pre id="wtgCodeOutputStructure" class="wtg-code wtg-top-gap"></pre>
+            </div>
           </section>
 
           <section class="wtg-tab-panel" data-panel="content">
@@ -101,13 +130,20 @@
 
             <div class="wtg-section">
               <h2>선택한 셀 편집</h2>
+              <div class="wtg-toolbar">
+                <button id="wtgBoldBtn" class="wtg-tool-button" type="button"><strong>B</strong></button>
+                <button id="wtgItalicBtn" class="wtg-tool-button" type="button"><em>I</em></button>
+                <button id="wtgStrikeBtn" class="wtg-tool-button" type="button"><s>S</s></button>
+                <button id="wtgLinkBtn" class="wtg-tool-button" type="button">링크</button>
+              </div>
+
               <div class="wtg-field">
                 <label for="wtgCellTextInput">텍스트</label>
                 <textarea id="wtgCellTextInput" class="wtg-textarea"></textarea>
               </div>
 
               <div class="wtg-field">
-                <label for="wtgCellLinkInput">링크 주소 또는 위키 문법</label>
+                <label for="wtgCellLinkInput">기본 링크 주소 또는 위키 문법</label>
                 <input id="wtgCellLinkInput" class="wtg-input" type="text" placeholder="예: https://example.com 또는 [[문서명]]" />
               </div>
 
@@ -131,46 +167,44 @@
                 </div>
               </div>
 
-              <div class="wtg-inline">
-                <div class="wtg-field">
-                  <label for="wtgCellBgInput">배경색</label>
-                  <div class="wtg-color-field">
-                    <input id="wtgCellBgInput" class="wtg-color" type="color" value="#ffffff" />
-                    <span class="wtg-color-preview" id="wtgCellBgPreview"></span>
+              <div class="wtg-color-grid">
+                <div class="wtg-color-item">
+                  <label>배경색</label>
+                  <div class="wtg-color-box-row">
+                    <button id="wtgCellBgBox" class="wtg-color-box" type="button"></button>
+                    <span id="wtgCellBgText" class="wtg-color-text"></span>
+                    <input id="wtgCellBgInput" class="wtg-hidden-color" type="color" value="#ffffff" />
                   </div>
                 </div>
-                <div class="wtg-field">
-                  <label for="wtgCellColorInput">글자색</label>
-                  <div class="wtg-color-field">
-                    <input id="wtgCellColorInput" class="wtg-color" type="color" value="#000000" />
-                    <span class="wtg-color-preview" id="wtgCellColorPreview"></span>
+                <div class="wtg-color-item">
+                  <label>글자색</label>
+                  <div class="wtg-color-box-row">
+                    <button id="wtgCellColorBox" class="wtg-color-box" type="button"></button>
+                    <span id="wtgCellColorText" class="wtg-color-text"></span>
+                    <input id="wtgCellColorInput" class="wtg-hidden-color" type="color" value="#000000" />
                   </div>
                 </div>
               </div>
 
-              <label class="wtg-check-row">
+              <label class="wtg-check-row wtg-top-gap">
                 <input id="wtgCellBoldInput" class="wtg-checkbox" type="checkbox" />
-                <span>굵게 표시합니다</span>
+                <span>셀 전체를 굵게 표시합니다</span>
               </label>
             </div>
 
             <div class="wtg-section">
               <h2>코드 복사</h2>
               <div class="wtg-file-copy-row">
-                <button id="wtgCopyMarkupBtn" class="wtg-button" type="button">위키 코드 복사</button>
-                <button id="wtgCopyHtmlBtn" class="wtg-button wtg-secondary" type="button">HTML 복사</button>
-                <button id="wtgCopyCssBtn" class="wtg-button wtg-secondary" type="button">CSS 복사</button>
-                <button id="wtgCopyJsBtn" class="wtg-button wtg-secondary" type="button">JS 복사</button>
+                <button id="wtgCopyAllContentBtn" class="wtg-button" type="button">전체 코드 복사</button>
               </div>
-              <pre id="wtgCodeOutput" class="wtg-code wtg-top-gap"></pre>
-              <p class="wtg-muted">HTML, CSS, JS는 현재 프로젝트 파일 기준으로 각각 복사됩니다.</p>
+              <pre id="wtgCodeOutputContent" class="wtg-code wtg-top-gap"></pre>
             </div>
           </section>
         </div>
       </section>
 
       <section class="wtg-right-panel">
-        <div class="wtg-preview-card wtg-preview-sticky">
+        <div class="wtg-preview-sticky">
           <div class="wtg-preview-head">
             <h2>미리보기</h2>
             <span class="wtg-pill">편집 중에는 현재 열림 상태를 유지합니다.</span>
