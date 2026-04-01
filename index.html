@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>위키 접기/펼치기 표 생성기</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="wtg-app">
+    <main class="wtg-shell">
+      <section class="wtg-left-panel">
+        <header class="wtg-app-header">
+          <h1>표 편집기</h1>
+          <p>왼쪽 패널에서 구조와 내용을 나누어 수정할 수 있습니다.</p>
+        </header>
+
+        <div class="wtg-tabs" role="tablist" aria-label="편집 탭">
+          <button class="wtg-tab-button wtg-active" type="button" data-tab="structure">표 구조</button>
+          <button class="wtg-tab-button" type="button" data-tab="content">표 내용</button>
+        </div>
+
+        <div class="wtg-left-scroll">
+          <section class="wtg-tab-panel wtg-active" data-panel="structure">
+            <div class="wtg-section">
+              <h2>전체 설정</h2>
+              <div class="wtg-field">
+                <label for="wtgTitleInput">표 제목</label>
+                <input id="wtgTitleInput" class="wtg-input" type="text" value="표 제목" />
+              </div>
+
+              <label class="wtg-check-row">
+                <input id="wtgCollapsibleInput" class="wtg-checkbox" type="checkbox" checked />
+                <span>펼치기/접기 기능을 사용합니다</span>
+              </label>
+
+              <label class="wtg-check-row">
+                <input id="wtgAnimatedToggleInput" class="wtg-checkbox" type="checkbox" checked />
+                <span>부드러운 펼치기/접기 애니메이션을 적용합니다</span>
+              </label>
+
+              <div class="wtg-field">
+                <label for="wtgFooterInput">하단 설명</label>
+                <textarea id="wtgFooterInput" class="wtg-textarea"></textarea>
+              </div>
+            </div>
+
+            <div class="wtg-section">
+              <h2>기본 디자인</h2>
+              <div class="wtg-inline">
+                <div class="wtg-field">
+                  <label for="wtgTitleBgInput">제목 배경</label>
+                  <div class="wtg-color-field">
+                    <input id="wtgTitleBgInput" class="wtg-color" type="color" value="#7b818c" />
+                    <span class="wtg-color-preview" id="wtgTitleBgPreview"></span>
+                  </div>
+                </div>
+                <div class="wtg-field">
+                  <label for="wtgTitleColorInput">제목 글자</label>
+                  <div class="wtg-color-field">
+                    <input id="wtgTitleColorInput" class="wtg-color" type="color" value="#ffffff" />
+                    <span class="wtg-color-preview" id="wtgTitleColorPreview"></span>
+                  </div>
+                </div>
+                <div class="wtg-field">
+                  <label for="wtgBorderColorInput">테두리</label>
+                  <div class="wtg-color-field">
+                    <input id="wtgBorderColorInput" class="wtg-color" type="color" value="#b8bec8" />
+                    <span class="wtg-color-preview" id="wtgBorderColorPreview"></span>
+                  </div>
+                </div>
+                <div class="wtg-field">
+                  <label for="wtgToggleBgInput">접기 줄 배경</label>
+                  <div class="wtg-color-field">
+                    <input id="wtgToggleBgInput" class="wtg-color" type="color" value="#f5f6f8" />
+                    <span class="wtg-color-preview" id="wtgToggleBgPreview"></span>
+                  </div>
+                </div>
+              </div>
+              <p class="wtg-muted">색상은 오른쪽 사각형 미리보기로 바로 확인할 수 있습니다.</p>
+            </div>
+
+            <div class="wtg-section">
+              <h2>표 구조</h2>
+              <div class="wtg-btn-row">
+                <button id="wtgAddRowBtn" class="wtg-button" type="button">행 추가</button>
+                <button id="wtgRemoveRowBtn" class="wtg-button wtg-secondary" type="button">행 삭제</button>
+                <button id="wtgAddColBtn" class="wtg-button" type="button">열 추가</button>
+                <button id="wtgRemoveColBtn" class="wtg-button wtg-secondary" type="button">열 삭제</button>
+              </div>
+              <p id="wtgTableSizeText" class="wtg-muted"></p>
+            </div>
+          </section>
+
+          <section class="wtg-tab-panel" data-panel="content">
+            <div class="wtg-section">
+              <h2>셀 선택</h2>
+              <div class="wtg-pill">미리보기 표 또는 아래 목록에서 셀을 선택할 수 있습니다.</div>
+              <div id="wtgCellList" class="wtg-cell-list wtg-top-gap"></div>
+            </div>
+
+            <div class="wtg-section">
+              <h2>선택한 셀 편집</h2>
+              <div class="wtg-field">
+                <label for="wtgCellTextInput">텍스트</label>
+                <textarea id="wtgCellTextInput" class="wtg-textarea"></textarea>
+              </div>
+
+              <div class="wtg-field">
+                <label for="wtgCellLinkInput">링크 주소 또는 위키 문법</label>
+                <input id="wtgCellLinkInput" class="wtg-input" type="text" placeholder="예: https://example.com 또는 [[문서명]]" />
+              </div>
+
+              <div class="wtg-field">
+                <label for="wtgCellImageInput">이미지 URL</label>
+                <input id="wtgCellImageInput" class="wtg-input" type="text" placeholder="https://example.com/image.png" />
+              </div>
+
+              <div class="wtg-inline">
+                <div class="wtg-field">
+                  <label for="wtgCellImageWidthInput">이미지 너비</label>
+                  <input id="wtgCellImageWidthInput" class="wtg-number" type="number" min="20" value="80" />
+                </div>
+                <div class="wtg-field">
+                  <label for="wtgCellAlignInput">정렬</label>
+                  <select id="wtgCellAlignInput" class="wtg-select">
+                    <option value="left">왼쪽</option>
+                    <option value="center">가운데</option>
+                    <option value="right">오른쪽</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="wtg-inline">
+                <div class="wtg-field">
+                  <label for="wtgCellBgInput">배경색</label>
+                  <div class="wtg-color-field">
+                    <input id="wtgCellBgInput" class="wtg-color" type="color" value="#ffffff" />
+                    <span class="wtg-color-preview" id="wtgCellBgPreview"></span>
+                  </div>
+                </div>
+                <div class="wtg-field">
+                  <label for="wtgCellColorInput">글자색</label>
+                  <div class="wtg-color-field">
+                    <input id="wtgCellColorInput" class="wtg-color" type="color" value="#000000" />
+                    <span class="wtg-color-preview" id="wtgCellColorPreview"></span>
+                  </div>
+                </div>
+              </div>
+
+              <label class="wtg-check-row">
+                <input id="wtgCellBoldInput" class="wtg-checkbox" type="checkbox" />
+                <span>굵게 표시합니다</span>
+              </label>
+            </div>
+
+            <div class="wtg-section">
+              <h2>코드 복사</h2>
+              <div class="wtg-file-copy-row">
+                <button id="wtgCopyMarkupBtn" class="wtg-button" type="button">위키 코드 복사</button>
+                <button id="wtgCopyHtmlBtn" class="wtg-button wtg-secondary" type="button">HTML 복사</button>
+                <button id="wtgCopyCssBtn" class="wtg-button wtg-secondary" type="button">CSS 복사</button>
+                <button id="wtgCopyJsBtn" class="wtg-button wtg-secondary" type="button">JS 복사</button>
+              </div>
+              <pre id="wtgCodeOutput" class="wtg-code wtg-top-gap"></pre>
+              <p class="wtg-muted">HTML, CSS, JS는 현재 프로젝트 파일 기준으로 각각 복사됩니다.</p>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="wtg-right-panel">
+        <div class="wtg-preview-card wtg-preview-sticky">
+          <div class="wtg-preview-head">
+            <h2>미리보기</h2>
+            <span class="wtg-pill">편집 중에는 현재 열림 상태를 유지합니다.</span>
+          </div>
+          <div class="wtg-preview-body">
+            <div id="wtgPreviewRoot"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
