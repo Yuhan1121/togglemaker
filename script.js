@@ -31,6 +31,7 @@ function wtgMakeDefaultState() {
     title: "표 제목",
     titleLayout: "basic",
     titleImage: "",
+    titleImageWidth: 140,
     borderWidth: 1,
     collapsible: true,
     collapsed: true,
@@ -45,6 +46,7 @@ function wtgMakeDefaultState() {
     rows: 3,
     cols: 3,
     selectedCell: { row: 0, col: 0 },
+    isToggleAnimating: false,
     cells: [
       [
         wtgCreateCell({ text: "1-1", bgColor: "#eceff3", color: "#374151", bold: true }),
@@ -70,6 +72,8 @@ var wtgState = wtgMakeDefaultState();
 var wtgEls = {
   titleInput: document.getElementById("wtgTitleInput"),
   titleLayoutSelect: document.getElementById("wtgTitleLayoutSelect"),
+  titleImageInput: document.getElementById("wtgTitleImageInput"),
+  titleImageWidthInput: document.getElementById("wtgTitleImageWidthInput"),
   borderWidthInput: document.getElementById("wtgBorderWidthInput"),
   collapsibleInput: document.getElementById("wtgCollapsibleInput"),
   animatedToggleInput: document.getElementById("wtgAnimatedToggleInput"),
@@ -131,6 +135,8 @@ function wtgApplyStateToInputs() {
   var cell = wtgGetSelectedCell();
   wtgEls.titleInput.value = wtgState.title;
   wtgEls.titleLayoutSelect.value = wtgState.titleLayout;
+  wtgEls.titleImageInput.value = wtgState.titleImage;
+  wtgEls.titleImageWidthInput.value = String(wtgState.titleImageWidth);
   wtgEls.borderWidthInput.value = String(wtgState.borderWidth);
   wtgEls.collapsibleInput.checked = wtgState.collapsible;
   wtgEls.animatedToggleInput.checked = wtgState.animatedToggle;
@@ -169,7 +175,6 @@ function wtgRenderCellButtons() {
   var r;
   var c;
   wtgEls.cellList.innerHTML = "";
-
   for (r = 0; r < wtgState.rows; r += 1) {
     for (c = 0; c < wtgState.cols; c += 1) {
       var button = document.createElement("button");
@@ -179,10 +184,7 @@ function wtgRenderCellButtons() {
       button.dataset.row = String(r);
       button.dataset.col = String(c);
       button.addEventListener("click", function () {
-        wtgState.selectedCell = {
-          row: Number(this.dataset.row),
-          col: Number(this.dataset.col)
-        };
+        wtgState.selectedCell = { row: Number(this.dataset.row), col: Number(this.dataset.col) };
         wtgApplyStateToInputs();
         wtgSetActiveTab("content");
         wtgRender(false);
@@ -190,7 +192,6 @@ function wtgRenderCellButtons() {
       wtgEls.cellList.appendChild(button);
     }
   }
-
   wtgEls.tableSizeText.textContent = "현재 표 크기는 " + wtgState.rows + "행 × " + wtgState.cols + "열입니다.";
 }
 
@@ -208,7 +209,6 @@ function wtgParseInlineMarkup(text) {
 function wtgFormatTextForPreview(cell) {
   var content = wtgParseInlineMarkup(cell.text);
   var rawLink = cell.link.trim();
-
   if (rawLink) {
     if (rawLink.indexOf("[[") === 0 && rawLink.lastIndexOf("]]") === rawLink.length - 2) {
       content = "<span>" + wtgEscapeHtml(rawLink) + "</span>" + (content ? "<br>" + content : "");
@@ -217,44 +217,54 @@ function wtgFormatTextForPreview(cell) {
       content = '<a href="' + href + '" target="_blank" rel="noreferrer noopener">' + (content || href) + '</a>';
     }
   }
-
   if (cell.bold) {
     content = "<strong>" + content + "</strong>";
   }
-
   return content;
 }
 
-function wtgApplyToggleState(contentEl, collapsed, animated, force) {
+function wtgApplyToggleState(contentEl, innerEl, collapsed, animated, force) {
   var fullHeight;
-  if (!contentEl) return;
-  fullHeight = contentEl.scrollHeight;
+  if (!contentEl || !innerEl) return;
+  fullHeight = innerEl.scrollHeight;
 
   if (!animated || force) {
     contentEl.classList.remove("wtg-animated");
-    contentEl.style.height = collapsed ? "0px" : "auto";
-    contentEl.style.opacity = collapsed ? "0" : "1";
+    innerEl.classList.remove("wtg-animated");
+    contentEl.style.height = collapsed ? "0px" : fullHeight + "px";
+    innerEl.style.transform = collapsed ? "scaleY(0)" : "scaleY(1)";
     return;
   }
 
+  if (wtgState.isToggleAnimating) return;
+  wtgState.isToggleAnimating = true;
   contentEl.classList.add("wtg-animated");
+  innerEl.classList.add("wtg-animated");
+
   if (collapsed) {
     contentEl.style.height = fullHeight + "px";
-    contentEl.style.opacity = "1";
+    innerEl.style.transform = "scaleY(1)";
     requestAnimationFrame(function () {
       contentEl.style.height = "0px";
-      contentEl.style.opacity = "0";
+      innerEl.style.transform = "scaleY(0)";
     });
   } else {
     contentEl.style.height = fullHeight + "px";
-    contentEl.style.opacity = "1";
+    innerEl.style.transform = "scaleY(1)";
   }
+
+  window.clearTimeout(wtgApplyToggleState._timer);
+  wtgApplyToggleState._timer = window.setTimeout(function () {
+    if (!collapsed) {
+      contentEl.style.height = "auto";
+    }
+    wtgState.isToggleAnimating = false;
+  }, 210);
 }
 
 function wtgBuildTitleHtml() {
-  var imageCell = wtgGetSelectedCell();
-  var imageUrl = imageCell.image.trim();
-  var imageWidth = Number(imageCell.imageWidth) || 80;
+  var imageUrl = wtgState.titleImage.trim();
+  var imageWidth = Number(wtgState.titleImageWidth) || 140;
   var text = wtgEscapeHtml(wtgState.title).replace(/\n/g, "<br>");
 
   if (wtgState.titleLayout === "composite") {
@@ -297,28 +307,31 @@ function wtgRenderPreview(useAnimation) {
     html += '<div class="wtg-toggle" id="wtgPreviewToggle" style="background:' + wtgState.colors.toggleBg + '; color:#374151; border-bottom:' + wtgState.borderWidth + 'px solid ' + wtgState.colors.borderColor + ';">[ ' + (wtgState.collapsed ? '펼치기' : '접기') + ' ]</div>';
   }
   html += '<div class="wtg-toggle-content" id="wtgPreviewToggleContent">';
+  html += '<div class="wtg-toggle-anim-inner" id="wtgToggleAnimInner">';
   html += '<div class="wtg-table-wrap">';
   html += '<table class="wtg-table"><tbody>' + rowsHtml + '</tbody></table>';
   if (wtgState.footer.trim()) {
     html += '<div class="wtg-footer" style="border-top:' + wtgState.borderWidth + 'px solid ' + wtgState.colors.borderColor + '; color:#4b5563;">' + wtgReplaceAll(wtgEscapeHtml(wtgState.footer), "\n", '<br>') + '</div>';
   }
-  html += '</div></div></div>';
+  html += '</div></div></div></div>';
 
   wtgEls.previewRoot.innerHTML = html;
 
   var contentEl = document.getElementById("wtgPreviewToggleContent");
+  var innerEl = document.getElementById("wtgToggleAnimInner");
   if (wtgState.collapsible) {
-    wtgApplyToggleState(contentEl, wtgState.collapsed, wtgState.animatedToggle, !useAnimation);
+    wtgApplyToggleState(contentEl, innerEl, wtgState.collapsed, wtgState.animatedToggle, !useAnimation);
   } else {
     contentEl.style.height = "auto";
-    contentEl.style.opacity = "1";
+    innerEl.style.transform = "scaleY(1)";
   }
 
   var toggle = document.getElementById("wtgPreviewToggle");
   if (toggle) {
     toggle.addEventListener("click", function () {
+      if (wtgState.isToggleAnimating) return;
       wtgState.collapsed = !wtgState.collapsed;
-      wtgApplyToggleState(contentEl, wtgState.collapsed, wtgState.animatedToggle, false);
+      wtgApplyToggleState(contentEl, innerEl, wtgState.collapsed, wtgState.animatedToggle, false);
       this.textContent = '[ ' + (wtgState.collapsed ? '펼치기' : '접기') + ' ]';
       wtgRenderExportCode();
     });
@@ -327,10 +340,7 @@ function wtgRenderPreview(useAnimation) {
   var cells = wtgEls.previewRoot.querySelectorAll("td[data-row][data-col]");
   cells.forEach(function (td) {
     td.addEventListener("click", function () {
-      wtgState.selectedCell = {
-        row: Number(td.dataset.row),
-        col: Number(td.dataset.col)
-      };
+      wtgState.selectedCell = { row: Number(td.dataset.row), col: Number(td.dataset.col) };
       wtgApplyStateToInputs();
       wtgSetActiveTab("content");
       wtgRender(false);
@@ -359,9 +369,7 @@ function wtgCopyText(text, button) {
     .then(function () {
       var original = button.textContent;
       button.textContent = "복사 완료";
-      setTimeout(function () {
-        button.textContent = original;
-      }, 1200);
+      setTimeout(function () { button.textContent = original; }, 1200);
     })
     .catch(function () {
       alert("복사에 실패했습니다. 코드를 직접 선택하여 복사해 주세요.");
@@ -431,6 +439,16 @@ wtgEls.titleLayoutSelect.addEventListener("change", function (e) {
   wtgRender(false);
 });
 
+wtgEls.titleImageInput.addEventListener("input", function (e) {
+  wtgState.titleImage = e.target.value;
+  wtgRender(false);
+});
+
+wtgEls.titleImageWidthInput.addEventListener("input", function (e) {
+  wtgState.titleImageWidth = Number(e.target.value) || 140;
+  wtgRender(false);
+});
+
 wtgEls.borderWidthInput.addEventListener("input", function (e) {
   wtgState.borderWidth = Number(e.target.value) || 1;
   wtgRender(false);
@@ -456,19 +474,16 @@ wtgEls.titleBgInput.addEventListener("input", function (e) {
   wtgApplyStateToInputs();
   wtgRender(false);
 });
-
 wtgEls.titleColorInput.addEventListener("input", function (e) {
   wtgState.colors.titleColor = e.target.value;
   wtgApplyStateToInputs();
   wtgRender(false);
 });
-
 wtgEls.borderColorInput.addEventListener("input", function (e) {
   wtgState.colors.borderColor = e.target.value;
   wtgApplyStateToInputs();
   wtgRender(false);
 });
-
 wtgEls.toggleBgInput.addEventListener("input", function (e) {
   wtgState.colors.toggleBg = e.target.value;
   wtgApplyStateToInputs();
@@ -480,11 +495,7 @@ wtgEls.addRowBtn.addEventListener("click", function () {
   var newRow = [];
   var colIndex;
   for (colIndex = 0; colIndex < wtgState.cols; colIndex += 1) {
-    newRow.push(wtgCreateCell({
-      text: (newRowIndex + 1) + "-" + (colIndex + 1),
-      bgColor: "#ffffff",
-      color: "#111827"
-    }));
+    newRow.push(wtgCreateCell({ text: (newRowIndex + 1) + "-" + (colIndex + 1), bgColor: "#ffffff", color: "#111827" }));
   }
   wtgState.cells.push(newRow);
   wtgState.rows += 1;
@@ -504,11 +515,7 @@ wtgEls.removeRowBtn.addEventListener("click", function () {
 
 wtgEls.addColBtn.addEventListener("click", function () {
   wtgState.cells.forEach(function (row, rowIndex) {
-    row.push(wtgCreateCell({
-      text: (rowIndex + 1) + "-" + (wtgState.cols + 1),
-      bgColor: "#ffffff",
-      color: "#111827"
-    }));
+    row.push(wtgCreateCell({ text: (rowIndex + 1) + "-" + (wtgState.cols + 1), bgColor: "#ffffff", color: "#111827" }));
   });
   wtgState.cols += 1;
   wtgRender(false);
@@ -516,9 +523,7 @@ wtgEls.addColBtn.addEventListener("click", function () {
 
 wtgEls.removeColBtn.addEventListener("click", function () {
   if (wtgState.cols <= 1) return;
-  wtgState.cells.forEach(function (row) {
-    row.pop();
-  });
+  wtgState.cells.forEach(function (row) { row.pop(); });
   wtgState.cols -= 1;
   if (wtgState.selectedCell.col >= wtgState.cols) {
     wtgState.selectedCell.col = wtgState.cols - 1;
@@ -531,39 +536,32 @@ wtgEls.cellTextInput.addEventListener("input", function (e) {
   wtgGetSelectedCell().text = e.target.value;
   wtgRender(false);
 });
-
 wtgEls.cellLinkInput.addEventListener("input", function (e) {
   wtgGetSelectedCell().link = e.target.value;
   wtgRender(false);
 });
-
 wtgEls.cellImageInput.addEventListener("input", function (e) {
   wtgGetSelectedCell().image = e.target.value;
   wtgRender(false);
 });
-
 wtgEls.cellImageWidthInput.addEventListener("input", function (e) {
   wtgGetSelectedCell().imageWidth = Number(e.target.value) || 80;
   wtgRender(false);
 });
-
 wtgEls.cellAlignInput.addEventListener("change", function (e) {
   wtgGetSelectedCell().align = e.target.value;
   wtgRender(false);
 });
-
 wtgEls.cellBgInput.addEventListener("input", function (e) {
   wtgGetSelectedCell().bgColor = e.target.value;
   wtgApplyStateToInputs();
   wtgRender(false);
 });
-
 wtgEls.cellColorInput.addEventListener("input", function (e) {
   wtgGetSelectedCell().color = e.target.value;
   wtgApplyStateToInputs();
   wtgRender(false);
 });
-
 wtgEls.cellBoldInput.addEventListener("change", function (e) {
   wtgGetSelectedCell().bold = e.target.checked;
   wtgRender(false);

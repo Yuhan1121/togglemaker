@@ -28,8 +28,8 @@
             <div class="wtg-section">
               <h2>전체 설정</h2>
               <div class="wtg-field">
-                <label for="wtgTitleInput">표 제목</label>
-                <input id="wtgTitleInput" class="wtg-input" type="text" value="표 제목" />
+                <label for="wtgTitleInput">표 제목 텍스트</label>
+                <textarea id="wtgTitleInput" class="wtg-textarea wtg-title-textarea">표 제목</textarea>
               </div>
 
               <div class="wtg-inline">
@@ -46,6 +46,17 @@
                 </div>
               </div>
 
+              <div class="wtg-inline">
+                <div class="wtg-field">
+                  <label for="wtgTitleImageInput">제목 이미지 URL</label>
+                  <input id="wtgTitleImageInput" class="wtg-input" type="text" placeholder="https://example.com/title-image.png" />
+                </div>
+                <div class="wtg-field">
+                  <label for="wtgTitleImageWidthInput">제목 이미지 너비</label>
+                  <input id="wtgTitleImageWidthInput" class="wtg-number" type="number" min="20" value="140" />
+                </div>
+              </div>
+
               <label class="wtg-check-row">
                 <input id="wtgCollapsibleInput" class="wtg-checkbox" type="checkbox" checked />
                 <span>펼치기/접기 기능을 사용합니다</span>
@@ -53,7 +64,7 @@
 
               <label class="wtg-check-row">
                 <input id="wtgAnimatedToggleInput" class="wtg-checkbox" type="checkbox" checked />
-                <span>부드러운 펼치기/접기 애니메이션을 적용합니다</span>
+                <span>나무위키 느낌의 펼치기/접기 애니메이션을 적용합니다</span>
               </label>
 
               <div class="wtg-field">
